@@ -1,19 +1,20 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace NexusV1
+namespace NexusV2
 {
-    // --- 1. SISTEMA DE PERSONAJES (HERENCIA Y POLIMORFISMO) ---
     abstract class Personaje
     {
         public string Nombre { get; set; }
         public int Salud { get; set; }
+        public int SaludMaxima { get; set; }
 
         public Personaje(string nombre, int salud)
         {
             Nombre = nombre;
             Salud = salud;
+            SaludMaxima = salud;
         }
 
         public abstract void Reaccionar();
@@ -21,22 +22,29 @@ namespace NexusV1
 
     class Cadete : Personaje
     {
+        public string Rol { get; set; }
         public int Energia { get; set; }
+        public int EnergiaMaxima { get; set; }
         public int Experiencia { get; set; }
         public List<Objeto> Inventario { get; set; }
         public int PosX { get; set; }
         public int PosY { get; set; }
+        
+        public Objeto? ArmaEquipada { get; set; }
+        public Objeto? ArmaduraEquipada { get; set; }
 
-        public Cadete(string nombre) : base(nombre, 100)
+        public Cadete(string nombre, string rol, int salud, int energia) : base(nombre, salud)
         {
-            Energia = 100;
+            Rol = rol;
+            Energia = energia;
+            EnergiaMaxima = energia;
             Experiencia = 0;
             Inventario = new List<Objeto>();
             PosX = 0;
             PosY = 0;
         }
 
-        public override void Reaccionar() { } // El cadete reacciona mediante el menú del jugador
+        public override void Reaccionar() { }
     }
 
     class Enemigo : Personaje
@@ -46,26 +54,34 @@ namespace NexusV1
 
         public override void Reaccionar()
         {
-            Console.WriteLine($"[!] El {Nombre} ruge e inicia una postura de combate.");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"[!] ¡El {Nombre} ruge furioso y adopta una postura letal de combate!");
+            Console.ResetColor();
         }
     }
 
     class Robot : Personaje
     {
         public int NivelSeguridad { get; set; }
-        public Robot(string nombre, int salud, int nivelSeguridad) : base(nombre, salud) { NivelSeguridad = nivelSeguridad; }
+        public int Daño { get; set; }
+        public Robot(string nombre, int salud, int nivelSeguridad, int daño) : base(nombre, salud) 
+        { 
+            NivelSeguridad = nivelSeguridad; 
+            Daño = daño;
+        }
 
         public override void Reaccionar()
         {
-            Console.WriteLine($"[!] El {Nombre} activa sus protocolos de defensa nivel {NivelSeguridad}.");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"[!] El {Nombre} despliega escudos de energía y activa protocolos de aniquilación (Seguridad Nivel {NivelSeguridad}).");
+            Console.ResetColor();
         }
     }
 
-    // --- SISTEMA DE INVENTARIO ---
     class Objeto
     {
         public string Nombre { get; set; }
-        public string Tipo { get; set; } // "Energia", "Salud", "Ataque", "Analizador"
+        public string Tipo { get; set; }
         public int Valor { get; set; }
 
         public Objeto(string nombre, string tipo, int valor)
@@ -76,7 +92,6 @@ namespace NexusV1
         }
     }
 
-    // --- CONTROLADOR PRINCIPAL DEL JUEGO ---
     class Program
     {
         static Cadete jugador = null!;
@@ -85,33 +100,68 @@ namespace NexusV1
         static bool encontroNucleo = false;
         static Random random = new Random();
 
-        // Mapa de 5x5 (Representa la matriz 2D de la realidad desconocida)
         static int limiteMapa = 5;
+
+        static string[,] descripcionesMapa = new string[5, 5] {
+            { "Zona de Aterrizaje Segura (Base Nexus)", "Pasillos oscuros con luces de emergencia parpadeantes.", "Laboratorio abandonado con terminales rotas.", "Cables colgando y olor a ozono quemado.", "Sala de servidores inundada de líquido refrigerante." },
+            { "Almacén secundario de suministros", "Sección colapsada por un impacto de meteorito.", "Pasarela metálica sobre un abismo sin fin.", "Antiguo comedor militar cubierto de polvo.", "Celdas de contención vacías y abiertas." },
+            { "Jardín hidropónico muerto y marchito", "Centro de control central con pantallas estáticas.", "Cámara de pruebas cinéticas.", "Túnel de ventilación industrial.", "Arsenal militar con estantes vacíos." },
+            { "Hangar de naves nodrizas secundarias", "Pasillo secundario blindado.", "Área de cuarentena biológica.", "Estación de radio con transmisiones en bucle.", "Laboratorio de genética prohibida." },
+            { "Cámara de descontaminación", "Subsuelo profundo de alta presión.", "Cripta de datos cuánticos.", "Antesala del núcleo principal.", "EL NÚCLEO ENERGÉTICO ANÓMALO" }
+        };
 
         static void Main(string[] args)
         {
+            Console.Title = "NEXUS V2 - Protocolo Omega";
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("==================================================");
-            Console.WriteLine("       N E X U S  v1.0 - AÑO 2297                 ");
+            Console.WriteLine("     N E X U S   V2.0 - PROTOCOLO OMEGA (2297)     ");
             Console.WriteLine("==================================================");
             Console.ResetColor();
 
-            // Identificación
-            Console.Write("Ingrese su identificación de Cadete: ");
+            Console.Write("Ingrese su identificación de Operativo: ");
             string nombre = Console.ReadLine() ?? "";
-            if (string.IsNullOrWhiteSpace(nombre)) nombre = "Explorer Desconocido";
+            if (string.IsNullOrWhiteSpace(nombre)) nombre = "Operativo Anónimo";
 
-            jugador = new Cadete(nombre);
-            jugador.Inventario.Add(new Objeto("Célula de energía básica", "Energia", 25)); // Objeto inicial
+            Console.WriteLine("\nSeleccione su Especialización Táctica:");
+            Console.WriteLine("1. Soldado (Salud: 120 | Energía: 80 | Mayor poder ofensivo)");
+            Console.WriteLine("2. Ingeniero (Salud: 100 | Energía: 120 | Mayor eficiencia energética)");
+            Console.WriteLine("3. Médico de Combate (Salud: 140 | Energía: 90 | Mayor resistencia general)");
+            Console.Write("Selección (1-3): ");
+            string seleccionClase = Console.ReadLine() ?? "";
 
-            Console.WriteLine($"\n[SISTEMA] Bienvenido, Cadete {jugador.Nombre}.");
-            Console.WriteLine("[MISIÓN ASIGNADA] 'La anomalía perdida'");
-            Console.WriteLine("- Objetivo 1: Encontrar el núcleo energético (Ubicación desconocida).");
-            Console.WriteLine("- Objetivo 2: Sobrevivir y extraer.\n");
+            if (seleccionClase == "1")
+            {
+                jugador = new Cadete(nombre, "Soldado", 120, 80);
+                jugador.Inventario.Add(new Objeto("Rifle de Asalto Básico", "Arma", 10));
+                jugador.ArmaEquipada = jugador.Inventario[0];
+            }
+            else if (seleccionClase == "2")
+            {
+                jugador = new Cadete(nombre, "Ingeniero", 100, 120);
+                jugador.Inventario.Add(new Objeto("Pistola Láser", "Arma", 6));
+                jugador.ArmaEquipada = jugador.Inventario[0];
+            }
+            else
+            {
+                jugador = new Cadete(nombre, "Médico", 140, 90);
+                jugador.Inventario.Add(new Objeto("Escalpelos Tácticos", "Arma", 4));
+                jugador.ArmaEquipada = jugador.Inventario[0];
+            }
 
-            Thread.Sleep(2000);
+            jugador.Inventario.Add(new Objeto("Célula de Energía", "Energia", 30));
+            jugador.Inventario.Add(new Objeto("Botiquín de Emergencia", "Salud", 40));
 
-            // Bucle principal (Control de situaciones)
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"[SISTEMA] Operativo {jugador.Nombre} ({jugador.Rol}) registrado con éxito.");
+            Console.WriteLine("[MISIÓN] 'La anomalía perdida'");
+            Console.WriteLine("- Objetivo 1: Navegar el complejo, equiparte y hallar el Núcleo en (4,4).");
+            Console.WriteLine("- Objetivo 2: Regresar vivo a la coordenada (0,0) para la extracción.\n");
+            Console.ResetColor();
+
+            Thread.Sleep(2500);
+
             while (!gameOver)
             {
                 MostrarInterfaz();
@@ -121,18 +171,26 @@ namespace NexusV1
 
         static void MostrarInterfaz()
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"\n--- ESTADO --- | Salud: {jugador.Salud}/100 | Energía: {jugador.Energia}/100 | XP: {jugador.Experiencia}");
-            Console.WriteLine($"--- POSICIÓN - | X: {jugador.PosX} Y: {jugador.PosY}");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine("\n==================================================");
             Console.ResetColor();
-            Console.WriteLine("1. Explorar (Moverse)");
-            Console.WriteLine("2. Abrir Inventario");
-            Console.WriteLine("3. Ver Estado de Misión");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($" ESTADO | Salud: {jugador.Salud}/{jugador.SaludMaxima} | Energía: {jugador.Energia}/{jugador.EnergiaMaxima} | XP: {jugador.Experiencia}");
+            Console.WriteLine($" POSICIÓN| X: {jugador.PosX} | Y: {jugador.PosY} [{descripcionesMapa[jugador.PosY, jugador.PosX]}]");
+            string armaNombre = jugador.ArmaEquipada != null ? jugador.ArmaEquipada.Nombre : "Ninguna";
+            string armaduraNombre = jugador.ArmaduraEquipada != null ? jugador.ArmaduraEquipada.Nombre : "Ninguna";
+            Console.WriteLine($" EQUIPO | Arma: {armaNombre} | Armadura: {armaduraNombre}");
+            Console.ResetColor();
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine("==================================================");
+            Console.ResetColor();
+            Console.WriteLine("1. Explorar / Moverse por el complejo");
+            Console.WriteLine("2. Abrir Inventario / Gestionar Equipamiento");
+            Console.WriteLine("3. Ver Estado de Misión y Radar");
             Console.WriteLine("4. Abortar Misión (Salir)");
-            Console.Write("Seleccione una acción: ");
+            Console.Write("Seleccione una opción táctica: ");
         }
 
-        // --- 7. CONTROL DE SITUACIONES (Validaciones) ---
         static void ProcesarMenuPrincipal()
         {
             string opcion = Console.ReadLine() ?? "";
@@ -148,21 +206,20 @@ namespace NexusV1
                     VerMision();
                     break;
                 case "4":
-                    Console.WriteLine("[SISTEMA] Misión abortada. El cadete ha escapado.");
+                    Console.WriteLine("\n[SISTEMA] Misión abortada por el usuario. Extracción de emergencia en curso...");
                     gameOver = true;
                     break;
                 default:
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("[ERROR] Opción inválida. El sistema táctico no reconoce la orden.");
+                    Console.WriteLine("[ERROR] Comando no reconocido por la interfaz táctica.");
                     Console.ResetColor();
                     break;
             }
         }
 
-        // --- 5. EXPLORACIÓN Y 6. EVENTOS ---
         static void Moverse()
         {
-            Console.Write("Dirección (W=Norte, S=Sur, A=Oeste, D=Este): ");
+            Console.Write("Dirección de avance (W=Norte, S=Sur, A=Oeste, D=Este): ");
             string dir = (Console.ReadLine() ?? "").ToUpper();
 
             int nuevaX = jugador.PosX;
@@ -174,29 +231,30 @@ namespace NexusV1
             else if (dir == "A") nuevaX--;
             else
             {
-                Console.WriteLine("[ERROR] Movimiento no reconocido.");
+                Console.WriteLine("[ERROR] Dirección táctica inválida.");
                 return;
             }
 
-            // Control de límites del mapa
             if (nuevaX < 0 || nuevaX >= limiteMapa || nuevaY < 0 || nuevaY >= limiteMapa)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("🚨 ADVERTENCIA: Intentando moverse fuera de los límites seguros. Movimiento cancelado.");
+                Console.WriteLine("🚨 ADVERTENCIA: Perímetro de seguridad alcanzado. Muro impenetrable detectado.");
                 Console.ResetColor();
                 return;
             }
 
             jugador.PosX = nuevaX;
             jugador.PosY = nuevaY;
-            jugador.Energia -= 5; // Costo de exploración
+            jugador.Energia -= 8;
 
-            Console.WriteLine($"\nDesplazándose a la zona ({jugador.PosX}, {jugador.PosY})...");
-            Thread.Sleep(1000);
+            Console.WriteLine($"\nDesplazándose al sector ({jugador.PosX}, {jugador.PosY})...");
+            Thread.Sleep(800);
 
             if (jugador.Energia <= 0)
             {
-                Console.WriteLine("🔋 PÉRDIDA DE ENERGÍA CRÍTICA. No puedes continuar. Fin de la transmisión.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n🔋 ENERGÍA AGOTADA. Sistemas vitales apagados. Fin de la transmisión.");
+                Console.ResetColor();
                 gameOver = true;
                 return;
             }
@@ -206,155 +264,199 @@ namespace NexusV1
 
         static void GenerarEventoAleatorio()
         {
-            int prob = random.Next(1, 101);
-
-            // Evento Misión Principal: La Anomalía (Fijada en 4,4 por ejemplo)
             if (jugador.PosX == 4 && jugador.PosY == 4 && !encontroNucleo)
             {
                 Console.ForegroundColor = ConsoleColor.Magenta;
-                Console.WriteLine("\n⚡ ANOMALÍA DETECTADA ⚡");
-                Console.WriteLine("Has encontrado el Núcleo Energético... pero está protegido.");
+                Console.WriteLine("\n⚡ ¡ANOMALÍA CUÁNTICA DETECTADA EN LA ZONA! ⚡");
+                Console.WriteLine("Has localizado el Núcleo Energético... pero una presencia masiva bloquea tu acceso.");
                 Console.ResetColor();
                 encontroNucleo = true;
-                Enemigo jefe = new Enemigo("Guardián del Núcleo", 80, 25);
+                Enemigo jefe = new Enemigo("Guardián Cuántico del Núcleo", 110, 22);
                 IniciarEncuentro(jefe);
                 return;
             }
 
-            // Eventos aleatorios
-            if (prob <= 30) // 30% nada
+            int prob = random.Next(1, 101);
+
+            if (prob <= 25)
             {
-                Console.WriteLine("La zona está despejada. No se detecta nada inusual.");
+                Console.WriteLine("El sector está en completo silencio. No hay amenazas a la vista.");
             }
-            else if (prob <= 55) // 25% objeto
+            else if (prob <= 50)
             {
-                Objeto nuevoObjeto = new Objeto("Célula de Energía", "Energia", 30);
+                int tipoObj = random.Next(1, 5);
+                Objeto nuevoObjeto;
+                if (tipoObj == 1) nuevoObjeto = new Objeto("Célula de Energía Avanzada", "Energia", 45);
+                else if (tipoObj == 2) nuevoObjeto = new Objeto("Nanobotiquín Médico", "Salud", 50);
+                else if (tipoObj == 3) nuevoObjeto = new Objeto("Pechera de Titanio", "Armadura", 15);
+                else nuevoObjeto = new Objeto("Granada EMP", "Granada", 35);
+
                 jugador.Inventario.Add(nuevoObjeto);
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"🎁 OBJETO ENCONTRADO: {nuevoObjeto.Nombre} ha sido añadido al inventario.");
+                Console.WriteLine($"🎁 RECURSO DESCUBIERTO: [{nuevoObjeto.Nombre}] añadido al inventario.");
                 Console.ResetColor();
             }
-            else if (prob <= 70) // 15% Robot
+            else if (prob <= 70)
             {
-                Console.WriteLine("👾 ENTIDAD DETECTADA");
-                Robot robot = new Robot("Dron Centinela", 40, 2);
+                Console.WriteLine("👾 ¡ALERTA DE AMENAZA MECÁNICA!");
+                Robot robot = new Robot("Dron Defensor MK-II", 60, 3, 14);
                 IniciarEncuentro(robot);
             }
-            else if (prob <= 90) // 20% Enemigo
+            else if (prob <= 90)
             {
-                Console.WriteLine("👾 ENTIDAD DETECTADA");
-                Enemigo alien = new Enemigo("Rastreador del Vacío", 50, 15);
+                Console.WriteLine("👾 ¡ENTIDAD HOSTIL BIOLÓGICA DETECTADA!");
+                Enemigo alien = new Enemigo("Mutante del Vacío", 70, 18);
                 IniciarEncuentro(alien);
             }
-            else // 10% Trampa o Sistema dañado
+            else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("🚨 SISTEMA DAÑADO: Has entrado en un campo de radiación.");
+                Console.WriteLine("🚨 ¡PELIGRO! Filtración masiva de radiación en el compartimento.");
                 Console.ResetColor();
-                jugador.Salud -= 15;
+                int danioRad = 20;
+                if (jugador.Rol == "Médico") danioRad = 10;
+                jugador.Salud -= danioRad;
+                Console.WriteLine($"Has sufrido {danioRad} puntos de daño por radiación ambiental.");
                 VerificarSalud();
             }
         }
 
-        // --- 2. SISTEMA DE ENCUENTROS ---
         static void IniciarEncuentro(Personaje entidad)
         {
-            entidad.Reaccionar(); // Polimorfismo en acción
+            entidad.Reaccionar();
             bool enCombate = true;
 
             while (enCombate && !gameOver)
             {
-                Console.WriteLine($"\n--- ENFRENTAMIENTO --- | {entidad.Nombre} (Salud: {entidad.Salud})");
-                Console.WriteLine("1. Atacar");
-                Console.WriteLine("2. Escapar");
-                Console.WriteLine("3. Utilizar Objeto");
-                Console.WriteLine("4. Analizar entidad");
-                Console.Write("Acción táctica: ");
+                Console.WriteLine($"\n--- COMBATE TÁCTICO --- | {entidad.Nombre} (Salud: {entidad.Salud})");
+                Console.WriteLine("1. Atacar con Arma");
+                Console.WriteLine("2. Lanzar Granada EMP (Si posees una)");
+                Console.WriteLine("3. Usar Objeto del Inventario");
+                Console.WriteLine("4. Intentar Escapar");
+                Console.WriteLine("5. Analizar Entidad");
+                Console.Write("Seleccione acción de combate: ");
 
                 string accion = Console.ReadLine() ?? "";
 
                 switch (accion)
                 {
                     case "1":
-                        // Atacar
-                        int dañoHecho = random.Next(15, 30);
+                        int baseDañoArma = jugador.ArmaEquipada != null ? jugador.ArmaEquipada.Valor : 5;
+                        int dañoHecho = random.Next(10, 20) + baseDañoArma;
+                        
+                        bool critico = random.Next(1, 101) <= 20;
+                        if (critico)
+                        {
+                            dañoHecho = (int)(dañoHecho * 1.5);
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("💥 ¡GOLPE CRÍTICO TÁCTICO!");
+                            Console.ResetColor();
+                        }
+
                         entidad.Salud -= dañoHecho;
-                        Console.WriteLine($"Atacaste a {entidad.Nombre} causando {dañoHecho} de daño.");
+                        Console.WriteLine($"Atacaste a {entidad.Nombre} infligiendo {dañoHecho} de daño.");
+
                         if (entidad.Salud <= 0)
                         {
-                            Console.WriteLine($"Has derrotado a {entidad.Nombre}!");
-                            jugador.Experiencia += 30;
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"¡Has aniquilado con éxito a {entidad.Nombre}!");
+                            Console.ResetColor();
+                            jugador.Experiencia += 40;
                             enCombate = false;
 
-                            // Si era el jefe
-                            if (entidad.Nombre == "Guardián del Núcleo")
+                            if (entidad.Nombre == "Guardián Cuántico del Núcleo")
                             {
-                                CompletarMision();
+                                CompletarMisionFase1();
                             }
                         }
                         break;
+
                     case "2":
-                        // Escapar
-                        if (random.Next(1, 100) > 40)
+                        Objeto? granada = jugador.Inventario.Find(o => o.Tipo == "Granada");
+                        if (granada != null)
                         {
-                            Console.WriteLine("Has logrado escapar de la entidad.");
+                            entidad.Salud -= granada.Valor;
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine($"¡Has lanzado una {granada.Nombre}! Causa {granada.Valor} de daño directo.");
+                            Console.ResetColor();
+                            jugador.Inventario.Remove(granada);
+
+                            if (entidad.Salud <= 0)
+                            {
+                                Console.WriteLine($"¡La entidad ha caído ante la detonación!");
+                                jugador.Experiencia += 40;
+                                enCombate = false;
+                                if (entidad.Nombre == "Guardián Cuántico del Núcleo") CompletarMisionFase1();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("[ERROR] No posees granadas EMP en el inventario.");
+                        }
+                        break;
+
+                    case "3":
+                        AdministrarInventario(true);
+                        break;
+
+                    case "4":
+                        if (random.Next(1, 100) > 45)
+                        {
+                            Console.WriteLine("¡Maniobra de evasión exitosa! Has escapado del enfrentamiento.");
                             enCombate = false;
                         }
                         else
                         {
-                            Console.WriteLine("Intento de escape fallido!");
+                            Console.WriteLine("¡La retirada ha sido bloqueada por la entidad!");
                         }
                         break;
-                    case "3":
-                        AdministrarInventario(true); // Uso en combate
+
+                    case "5":
+                        Console.WriteLine($"[ANALIZADOR TÁCTICO]: {entidad.Nombre}. Categoria: {(entidad is Robot ? "Sintético / Maquinaria" : "Orgánico / Mutado")}.");
                         break;
-                    case "4":
-                        Console.WriteLine($"ANALIZADOR: {entidad.Nombre}. Es un {(entidad is Robot ? "Robot de seguridad" : "Enemigo biológico")}.");
-                        break;
+
                     default:
-                        Console.WriteLine("Comando inválido. Pierdes tu turno.");
+                        Console.WriteLine("Comando de combate inválido. Pierdes tu turno.");
                         break;
                 }
 
-                // Turno del enemigo si sigue vivo y no escapamos
                 if (enCombate && entidad.Salud > 0)
                 {
-                    if (entidad is Enemigo enemigo)
+                    int danioRecibido = 0;
+                    if (entidad is Enemigo enemigo) danioRecibido = enemigo.Daño;
+                    else if (entidad is Robot robot) danioRecibido = robot.Daño;
+
+                    if (jugador.ArmaduraEquipada != null)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"El {enemigo.Nombre} te ataca y causa {enemigo.Daño} de daño!");
-                        Console.ResetColor();
-                        jugador.Salud -= enemigo.Daño;
-                        VerificarSalud();
+                        danioRecibido = Math.Max(2, danioRecibido - jugador.ArmaduraEquipada.Valor);
                     }
-                    else if (entidad is Robot robot)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine($"El {robot.Nombre} dispara un láser de supresión causando 10 de daño.");
-                        Console.ResetColor();
-                        jugador.Salud -= 10;
-                        VerificarSalud();
-                    }
+
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"¡{entidad.Nombre} contraataca, causando {danioRecibido} de daño!");
+                    Console.ResetColor();
+
+                    jugador.Salud -= danioRecibido;
+                    VerificarSalud();
                 }
             }
         }
 
-        // --- 3. SISTEMA DE INVENTARIO ---
         static void AdministrarInventario(bool enCombate = false)
         {
             if (jugador.Inventario.Count == 0)
             {
-                Console.WriteLine("\n[INVENTARIO] Vacío.");
+                Console.WriteLine("\n[INVENTARIO] Tu inventario está completamente vacío.");
                 return;
             }
 
-            Console.WriteLine("\n--- INVENTARIO ---");
+            Console.WriteLine("\n--- INVENTARIO TÁCTICO ---");
             for (int i = 0; i < jugador.Inventario.Count; i++)
             {
-                Console.WriteLine($"{i + 1}. {jugador.Inventario[i].Nombre} (+{jugador.Inventario[i].Valor} {jugador.Inventario[i].Tipo})");
+                Objeto obj = jugador.Inventario[i];
+                Console.WriteLine($"{i + 1}. {obj.Nombre} [{obj.Tipo}] -> Valor/Efecto: +{obj.Valor}");
             }
             Console.WriteLine("0. Volver");
-            Console.Write("Seleccione un objeto para usar: ");
+            Console.Write("Selecciona un objeto para usar o equipar: ");
 
             if (int.TryParse(Console.ReadLine(), out int seleccion))
             {
@@ -363,53 +465,73 @@ namespace NexusV1
                 if (seleccion > 0 && seleccion <= jugador.Inventario.Count)
                 {
                     Objeto obj = jugador.Inventario[seleccion - 1];
+
                     if (obj.Tipo == "Energia")
                     {
-                        jugador.Energia = Math.Min(100, jugador.Energia + obj.Valor);
-                        Console.WriteLine($"Has usado {obj.Nombre}. Energía actual: {jugador.Energia}");
+                        jugador.Energia = Math.Min(jugador.EnergiaMaxima, jugador.Energia + obj.Valor);
+                        Console.WriteLine($"Has consumido {obj.Nombre}. Energía restaurada a: {jugador.Energia}");
+                        jugador.Inventario.RemoveAt(seleccion - 1);
                     }
                     else if (obj.Tipo == "Salud")
                     {
-                        jugador.Salud = Math.Min(100, jugador.Salud + obj.Valor);
-                        Console.WriteLine($"Has usado {obj.Nombre}. Salud actual: {jugador.Salud}");
+                        jugador.Salud = Math.Min(jugador.SaludMaxima, jugador.Salud + obj.Valor);
+                        Console.WriteLine($"Has aplicado {obj.Nombre}. Salud actual: {jugador.Salud}");
+                        jugador.Inventario.RemoveAt(seleccion - 1);
                     }
-                    jugador.Inventario.RemoveAt(seleccion - 1); // Eliminar al usar
+                    else if (obj.Tipo == "Arma")
+                    {
+                        jugador.ArmaEquipada = obj;
+                        Console.WriteLine($"¡Has equipado el arma: {obj.Nombre} (+{obj.Valor} de daño base)!");
+                    }
+                    else if (obj.Tipo == "Armadura")
+                    {
+                        jugador.ArmaduraEquipada = obj;
+                        Console.WriteLine($"¡Has equipado la armadura: {obj.Nombre} (-{obj.Valor} de daño recibido)!");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Este objeto no se puede consumir directamente aquí.");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("[ERROR] El objeto seleccionado no existe en tu inventario."); // Control de situación
+                    Console.WriteLine("[ERROR] Selección fuera de rango.");
                 }
             }
             else
             {
-                Console.WriteLine("[ERROR] Entrada inválida.");
+                Console.WriteLine("[ERROR] Entrada no válida.");
             }
         }
 
-        // --- 4. SISTEMA DE MISIONES ---
         static void VerMision()
         {
-            Console.WriteLine("\n--- MISIÓN: LA ANOMALÍA PERDIDA ---");
-            Console.WriteLine($"1. Encontrar el núcleo: {(encontroNucleo ? "COMPLETADO" : "PENDIENTE")}");
-            Console.WriteLine($"2. Extraer con vida: {(misionCompletada ? "COMPLETADO" : "PENDIENTE")}");
+            Console.WriteLine("\n--- REGISTRO DE MISIÓN ---");
+            Console.WriteLine($"1. Encontrar el Núcleo Energético en (4,4): {(encontroNucleo ? "COMPLETADO" : "PENDIENTE")}");
+            Console.WriteLine($"2. Regresar a la extracción (0,0) con vida: {(misionCompletada ? "COMPLETADO" : "PENDIENTE")}");
 
             if (encontroNucleo && jugador.PosX == 0 && jugador.PosY == 0)
             {
-                Console.WriteLine("\n¡Has vuelto al punto de extracción con el núcleo!");
                 misionCompletada = true;
                 CompletarMisionFase2();
             }
             else if (encontroNucleo)
             {
-                Console.WriteLine("\n[ALERTA] Vuelve a la coordenada X:0, Y:0 para extraer!");
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("\n[RADAR] ¡Núcleo asegurado! Dirígete de vuelta a la coordenada de origen (0,0) para completar la extracción.");
+                Console.ResetColor();
+            }
+            else
+            {
+                Console.WriteLine("\n[RADAR] Explora hacia el sureste para encontrar el origen de la anomalía en (4,4).");
             }
         }
 
-        static void CompletarMision()
+        static void CompletarMisionFase1()
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\n¡Has recuperado el Núcleo Energético!");
-            Console.WriteLine("MISIÓN ACTUALIZADA: Regresa a la zona de aterrizaje (X:0, Y:0) para la extracción.");
+            Console.WriteLine("\n¡Has asegurado el Núcleo Energético Anómalo!");
+            Console.WriteLine("MISIÓN ACTUALIZADA: Vuelve a la base inicial (X:0, Y:0) para la extracción.");
             Console.ResetColor();
         }
 
@@ -417,10 +539,11 @@ namespace NexusV1
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("\n==================================================");
-            Console.WriteLine("               🟢 MISIÓN COMPLETADA              ");
+            Console.WriteLine("          🟢 MISIÓN CUMPLIDA CON ÉXITO            ");
             Console.WriteLine("==================================================");
-            Console.WriteLine("+ 100 XP");
-            Console.WriteLine("+ 1 Módulo desconocido añadido a la base");
+            Console.WriteLine($" Operativo: {jugador.Nombre} ({jugador.Rol})");
+            Console.WriteLine(" Recompensa: +250 XP | Rango de Élite Desbloqueado");
+            Console.WriteLine(" El Núcleo ha sido asegurado en los laboratorios centrales.");
             Console.WriteLine("==================================================");
             Console.ResetColor();
             gameOver = true;
@@ -431,13 +554,13 @@ namespace NexusV1
             if (jugador.Salud <= 0)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("\nSALUD CRÍTICA. El cadete ha sido eliminado en acción.");
-                Console.WriteLine("--- FIN DEL JUEGO ---");
+                Console.WriteLine("\n💀 SALUD CERO. Tus signos vitales han colapsado.");
+                Console.WriteLine("==================================================");
+                Console.WriteLine("              🔴 FIN DEL JUEGO (GAME OVER)        ");
+                Console.WriteLine("==================================================");
                 Console.ResetColor();
                 gameOver = true;
             }
         }
     }
 }
-
-
