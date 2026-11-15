@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace NexusV2
 {
-    abstract class Personaje
+    public abstract class Personaje
     {
         public string Nombre { get; set; }
         public int Salud { get; set; }
@@ -20,7 +20,7 @@ namespace NexusV2
         public abstract void Reaccionar();
     }
 
-    class Cadete : Personaje
+    public class Cadete : Personaje
     {
         public string Rol { get; set; }
         public int Energia { get; set; }
@@ -78,7 +78,7 @@ namespace NexusV2
         }
     }
 
-    class Objeto
+    public class Objeto
     {
         public string Nombre { get; set; }
         public string Tipo { get; set; }
