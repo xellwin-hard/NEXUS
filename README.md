@@ -6,9 +6,9 @@ NEXUS es un proyecto académico en C# que evoluciona desde una aventura de explo
 
 - **H3:** versión de consola con clases `Personaje`, `Cadete`, `Enemigo`, `Robot` y `Objeto`; exploración en mapa lógico 5 × 5, inventario, encuentros y misión principal.
 - **Evolución gráfica:** el repositorio contiene `Form1.cs`, un prototipo de Windows Forms con pantallas de introducción, registro, hangar, selección de mapas y arena 2D; incluye animación, HUD, controles, clases, armas ficticias, enemigos y jefes.
-- **SQL Server:** existe un script inicial para `NEXUS_DB` y la tabla `Jugadores`. El registro se documentó como probado durante H4.
+- **SQL Server:** además de `Jugadores`, se añadió `database/02_ampliacion_partidas.sql` para partidas, sectores, catálogo de objetos, inventario y progreso de misiones. Se agregó `Microsoft.Data.SqlClient`, una fábrica de conexión por variable de entorno y un repositorio ADO.NET para guardar/recuperar instantáneas.
 - **Integración WinForms:** el proyecto ya está configurado como aplicación Windows Forms, el punto de entrada inicia `Form1` y la solución apunta al proyecto correcto. Se añadió una compilación automática para Windows mediante GitHub Actions.
-- **Pendiente:** confirmar el resultado de la compilación automática, separar la lógica, incorporar el archivo real de conexión SQL y diseñar/implementar el guardado y recuperación de partidas.
+- **Pendiente de prueba local:** ejecutar los dos scripts SQL, configurar `NEXUS_SQL_CONNECTION`, probar el repositorio contra una instancia real y conectar el DTO `PartidaSnapshot` con el estado privado del formulario. La capa de persistencia está creada, pero todavía no está enlazada a los botones del juego.
 
 > El estado de los archivos del repositorio debe distinguirse de las funciones propuestas. El código gráfico todavía requiere verificar la configuración de proyecto y los archivos parciales antes de considerarlo una aplicación WinForms autónoma. El guardado completo de partidas no está confirmado.
 
@@ -47,7 +47,7 @@ NEXUS/
 3. El proyecto está configurado para Windows Forms sobre `net10.0-windows`. Abre la solución y compila en Windows con .NET 10 SDK. La interfaz construye sus controles desde `Form1.cs`, por lo que no depende de un archivo Designer.
 4. Configura SQL Server local y ejecuta `database/NEXUS_DB.sql` desde SQL Server Management Studio para crear la base y la tabla inicial de jugadores.
 5. Ajusta la cadena de conexión en la configuración local, nunca con credenciales o nombres de servidor personales dentro del repositorio.
-6. Compila con `dotnet build NEXUS.slnx --configuration Release` y ejecuta desde Visual Studio o con `dotnet run --project NEXUS.csproj`. La compilación automática se puede consultar en la pestaña Actions de GitHub.
+6. Configura la variable de entorno `NEXUS_SQL_CONNECTION` con una cadena de conexión local a `NEXUS_DB`. No publiques esa cadena ni credenciales.\n7. Para ampliar el esquema, ejecuta primero `database/NEXUS_DB.sql` y después `database/02_ampliacion_partidas.sql` en SQL Server Management Studio.\n8. Compila con `dotnet build NEXUS.slnx --configuration Release` y ejecuta desde Visual Studio o con `dotnet run --project NEXUS.csproj`. La compilación automática se puede consultar en Actions.
 
 ## Documentación
 
@@ -56,11 +56,11 @@ NEXUS/
 - [Arquitectura propuesta](docs/arquitectura-propuesta.md)
 - [Modelo de datos propuesto](docs/modelo-de-datos-propuesto.md)
 - [Análisis técnico](docs/analisis-tecnico.md)
-- [Bocetos y diagramas](docs/evidencias/)
+- [Bocetos y diagramas](docs/evidencias/)\n- [Guía de capturas reales](docs/evidencias/README.md)
 
 ## Base de datos
 
-El script inicial `database/NEXUS_DB.sql` crea `NEXUS_DB` y `dbo.Jugadores`. El diseño de tablas para partidas, inventario y misiones está documentado como evolución futura en `docs/modelo-de-datos-propuesto.md`; no forma parte del esquema inicial desplegado.
+El script inicial `database/NEXUS_DB.sql` crea `NEXUS_DB` y `dbo.Jugadores`. El script `database/02_ampliacion_partidas.sql` agrega las tablas de persistencia. `Data/PartidaRepository.cs` implementa guardado transaccional y recuperación de instantáneas. Todavía debe probarse en una instancia local y conectarse al estado real de la interfaz.
 
 ## Autor
 
