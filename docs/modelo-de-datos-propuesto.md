@@ -7,7 +7,7 @@ El script `database/NEXUS_DB.sql` crea la base `NEXUS_DB` y una tabla `dbo.Jugad
 - `IdJugador`: clave primaria autonumérica.
 - `Nombre`: nombre del jugador.
 
-El repositorio no contiene todavía tablas verificadas para partidas, inventario, misiones o progreso. El siguiente modelo es una propuesta de evolución; no debe confundirse con el esquema actualmente desplegado.
+El script inicial no incluía tablas para partidas, inventario o misiones. Se añadió el script `database/02_ampliacion_partidas.sql` para crear ese esquema de forma idempotente (crea cada tabla solo si no existe). También se incorporó `Data/PartidaRepository.cs`, que guarda y recupera una instantánea con una transacción SQL. La ejecución en una instancia local y la integración con el estado del formulario siguen pendientes de prueba.
 
 ## 2. Entidades propuestas
 
@@ -226,3 +226,13 @@ GO
 - La cadena de conexión no debe quedar fijada al nombre de un equipo personal.
 - Las operaciones que actualizan varias tablas deben usar transacciones.
 - No almacenar información personal innecesaria: para esta versión basta con el nombre elegido dentro del juego.
+
+
+## 7. Implementación incorporada al repositorio
+
+- `Data/PartidaSnapshot.cs`: DTO que representa el estado que se desea persistir.
+- `Data/NexusDbConnectionFactory.cs`: obtiene la cadena de conexión desde la variable de entorno `NEXUS_SQL_CONNECTION`.
+- `Data/PartidaRepository.cs`: guarda los datos principales, inventario y progreso de misiones dentro de una transacción; también permite recuperar una partida por identificador.
+- `database/02_ampliacion_partidas.sql`: crea las tablas relacionadas con la persistencia.
+
+**Límite actual:** el formulario `Form1.cs` todavía no convierte su estado interno a `PartidaSnapshot` ni llama al repositorio desde los controles Guardar/Continuar. Por eso, la capa de persistencia está preparada en el código, pero no debe presentarse como guardado ya disponible dentro del juego hasta realizar esa integración y probarla con SQL Server.
