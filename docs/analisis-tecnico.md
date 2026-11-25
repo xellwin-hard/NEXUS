@@ -83,3 +83,10 @@ La IA se utilizó como apoyo para ordenar alternativas y preparar un primer borr
 ## 9. Conclusión técnica
 
 La evolución más viable es conservar C# y Windows Forms, aprovechar el prototipo gráfico existente y extraer gradualmente la lógica heredada de H3. SQL Server puede cubrir el registro de jugadores y, mediante un modelo relacional ampliado, el guardado de campañas individuales. La principal tarea previa es corregir la integración del proyecto y separar responsabilidades antes de añadir más contenido.
+
+
+## 10. Implementación inicial de persistencia
+
+Se añadió el paquete `Microsoft.Data.SqlClient` al proyecto y se crearon `NexusDbConnectionFactory`, `PartidaSnapshot` y `PartidaRepository`. La conexión se obtiene de la variable de entorno `NEXUS_SQL_CONNECTION`; no se guarda una cadena con credenciales en GitHub. El repositorio usa parámetros SQL tipados y una transacción para mantener sincronizados los datos principales de la partida, su inventario y el progreso de misiones. Esta elección sigue las recomendaciones de Microsoft para SqlClient y parámetros SQL ([documentación de parámetros](https://learn.microsoft.com/en-us/sql/connect/ado-net/configure-parameters?view=sql-server-ver17)).
+
+La implementación todavía necesita una prueba contra una instancia local de SQL Server y la integración del DTO con el estado privado de `Form1.cs`. No se afirma que el juego ya guarde partidas desde su interfaz.
