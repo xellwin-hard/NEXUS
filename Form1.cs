@@ -206,7 +206,7 @@ namespace NexusForms
         // =========================================================================
         public Form1()
         {
-            InitializeComponent();
+            // Los controles se crean desde el propio código; no se requiere archivo Designer.
             OcultarControlesDiseñador();
             InicializarCatalogos();
             InicializarParticulasAmbiente();
