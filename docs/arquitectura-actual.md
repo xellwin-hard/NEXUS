@@ -84,9 +84,11 @@ El código gráfico contiene variables para uno o dos jugadores y una constante 
 
 ## 4. Estado real de integración y compilación
 
-En la raíz existe `NEXUS.csproj`, cuyo contenido actual declara `OutputType` como `Exe` y `TargetFramework` como `net10.0`. No declara `UseWindowsForms`. Además, `Program.cs` contiene el método `Main` de consola y `Form1.cs` referencia Windows Forms y llama a `InitializeComponent()`.
+En la revisión inicial, `NEXUS.csproj` estaba configurado como consola (`Exe`, `net10.0`) y la solución apuntaba a una carpeta `NexusForms` que no existe en el repositorio. Se actualizó el proyecto para usar `WinExe`, `net10.0-windows`, `UseWindowsForms=true` y `EnableWindowsTargeting=true`. También se corrigió `NEXUS.slnx` para que apunte al proyecto real de la raíz.
 
-En el listado de archivos de la raíz no aparece un archivo `Form1.Designer.cs`. Por ello, el repositorio consultado no demuestra una solución WinForms autónoma y lista para compilar. Antes de considerar terminada la integración se debe configurar el proyecto para Windows Forms, definir el inicio en `Form1` y comprobar los archivos parciales y recursos requeridos. No se afirma que la compilación haya sido probada.
+El constructor de `Form1` creaba los controles mediante código, pero llamaba a `InitializeComponent()` sin que existiera un archivo `Form1.Designer.cs` en el repositorio. Se retiró esa llamada para que la inicialización dependa de los métodos de construcción que ya contiene `Form1.cs`. El punto de entrada de `Program.cs` ahora inicia `NexusForms.Form1` con `Application.Run`.
+
+La configuración fue actualizada en GitHub. La compilación local no se pudo ejecutar en este entorno porque no tiene instalado el SDK de .NET. Se añadió un flujo de GitHub Actions para compilar en un agente Windows y comprobar la integración automáticamente.
 
 ## 5. SQL Server: estado comprobado
 
