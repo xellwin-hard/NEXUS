@@ -1,3 +1,4 @@
+using System.Windows.Forms;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -110,63 +111,11 @@ namespace NexusV2
             { "Cámara de descontaminación", "Subsuelo profundo de alta presión.", "Cripta de datos cuánticos.", "Antesala del núcleo principal.", "EL NÚCLEO ENERGÉTICO ANÓMALO" }
         };
 
+        [STAThread]
         static void Main(string[] args)
         {
-            Console.Title = "NEXUS V2 - Protocolo Omega";
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("==================================================");
-            Console.WriteLine("     N E X U S   V2.0 - PROTOCOLO OMEGA (2297)     ");
-            Console.WriteLine("==================================================");
-            Console.ResetColor();
-
-            Console.Write("Ingrese su identificación de Operativo: ");
-            string nombre = Console.ReadLine() ?? "";
-            if (string.IsNullOrWhiteSpace(nombre)) nombre = "Operativo Anónimo";
-
-            Console.WriteLine("\nSeleccione su Especialización Táctica:");
-            Console.WriteLine("1. Soldado (Salud: 120 | Energía: 80 | Mayor poder ofensivo)");
-            Console.WriteLine("2. Ingeniero (Salud: 100 | Energía: 120 | Mayor eficiencia energética)");
-            Console.WriteLine("3. Médico de Combate (Salud: 140 | Energía: 90 | Mayor resistencia general)");
-            Console.Write("Selección (1-3): ");
-            string seleccionClase = Console.ReadLine() ?? "";
-
-            if (seleccionClase == "1")
-            {
-                jugador = new Cadete(nombre, "Soldado", 120, 80);
-                jugador.Inventario.Add(new Objeto("Rifle de Asalto Básico", "Arma", 10));
-                jugador.ArmaEquipada = jugador.Inventario[0];
-            }
-            else if (seleccionClase == "2")
-            {
-                jugador = new Cadete(nombre, "Ingeniero", 100, 120);
-                jugador.Inventario.Add(new Objeto("Pistola Láser", "Arma", 6));
-                jugador.ArmaEquipada = jugador.Inventario[0];
-            }
-            else
-            {
-                jugador = new Cadete(nombre, "Médico", 140, 90);
-                jugador.Inventario.Add(new Objeto("Escalpelos Tácticos", "Arma", 4));
-                jugador.ArmaEquipada = jugador.Inventario[0];
-            }
-
-            jugador.Inventario.Add(new Objeto("Célula de Energía", "Energia", 30));
-            jugador.Inventario.Add(new Objeto("Botiquín de Emergencia", "Salud", 40));
-
-            Console.Clear();
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"[SISTEMA] Operativo {jugador.Nombre} ({jugador.Rol}) registrado con éxito.");
-            Console.WriteLine("[MISIÓN] 'La anomalía perdida'");
-            Console.WriteLine("- Objetivo 1: Navegar el complejo, equiparte y hallar el Núcleo en (4,4).");
-            Console.WriteLine("- Objetivo 2: Regresar vivo a la coordenada (0,0) para la extracción.\n");
-            Console.ResetColor();
-
-            Thread.Sleep(2500);
-
-            while (!gameOver)
-            {
-                MostrarInterfaz();
-                ProcesarMenuPrincipal();
-            }
+            ApplicationConfiguration.Initialize();
+            Application.Run(new NexusForms.Form1());
         }
 
         static void MostrarInterfaz()
