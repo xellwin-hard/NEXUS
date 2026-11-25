@@ -1,4 +1,3 @@
 <Solution>
-  <Project Path="../NexusForms/NexusForms.csproj" />
   <Project Path="NEXUS.csproj" />
 </Solution>
