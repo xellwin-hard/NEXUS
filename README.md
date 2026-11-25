@@ -60,7 +60,7 @@ NEXUS/
 
 ## Base de datos
 
-El script inicial `database/NEXUS_DB.sql` crea `NEXUS_DB` y `dbo.Jugadores`. El script `database/02_ampliacion_partidas.sql` agrega las tablas de persistencia. `Data/PartidaRepository.cs` implementa guardado transaccional y recuperación de instantáneas. Todavía debe probarse en una instancia local y conectarse al estado real de la interfaz.
+El script inicial `database/NEXUS_DB.sql` crea `NEXUS_DB` y `dbo.Jugadores`. El script `database/02_ampliacion_partidas.sql` agrega las tablas de persistencia. `Data/JugadorRepository.cs` registra/consulta jugadores y `Data/PartidaRepository.cs` implementa guardado transaccional y recuperación de instantáneas. Todavía debe probarse en una instancia local y conectarse al estado real de la interfaz.
 
 ## Autor
 
